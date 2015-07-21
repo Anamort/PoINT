@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [ "$#" -ne 5 ]
-    then
-        echo "Missing parameters. See -h for help"
-        exit 0
+if [ "$#" -lt 5 ]
+then
+echo "Missing parameters. See -h for help"
+exit 0
 fi
 
 DEBUG=false
@@ -41,7 +41,7 @@ case $i in
 Example:
 ./rewrite.sh -d=00:15:17:57:c7:ad -e=10.1.2.2 -s=00:15:17:57:c6:c5 -t=10.1.2.3 -f=Vimeo1.pcap"
 	;;
-	-v=*|--verbose*)
+	-v*|--verbose*)
 	DEBUG=true
 	shift #past argument=value
 	;;
@@ -55,6 +55,7 @@ Example:
 esac
 done
 
+
 echo "DESTINATION_MAC  = ${DESTINATION_MAC}"
 echo "DESTINATION_IP     = ${DESTINATION_IP}"
 echo "SOURCE_MAC    = ${SOURCE_MAC}"
@@ -65,23 +66,25 @@ echo "FILE_PATH    = ${FILE_PATH}"
 #     echo "Last line of file specified as non-opt/last argument:"
 #     tail -1 $1
 # fi
+cd /users/barisymn
+
 if $DEBUG ;
 then
-    echo 'Running tcprewrite to convert MAC addresses..'
+    echo "Running tcprewrite to convert MAC addresses.."
 fi
-tcprewrite --enet-dmac=DESTINATION_MAC --enet-smac=SOURCE_MAC --infile=FILE_PATH --outfile=yturewrite_output_intermediate.pcap
+tcprewrite --enet-dmac=$DESTINATION_MAC --enet-smac=$SOURCE_MAC --infile=$FILE_PATH --outfile=yturewrite_output_intermediate.pcap
 
 if $DEBUG ;
 then
     echo 'Running tcpprep..'
 fi
-tcpprep --auto=bridge --pcap=FILE_PATH --cachefile=yturewrite_output_intermediate_cache.cache
+tcpprep --auto=bridge --pcap=$FILE_PATH --cachefile=yturewrite_output_intermediate_cache.cache
 
 if $DEBUG ;
 then
     echo 'Running tcprewrite to convert IP addresses..'
 fi
-tcprewrite --endpoints=SOURCE_IP:DESTINATION_IP --cachefile=yturewrite_output_intermediate_cache.cache --infile=yturewrite_output_intermediate.pcap --outfile=yturewrite_output_intermediate_2.pcap --skipbroadcast
+tcprewrite --endpoints=$SOURCE_IP:$DESTINATION_IP --cachefile=yturewrite_output_intermediate_cache.cache --infile=yturewrite_output_intermediate.pcap --outfile=yturewrite_output_intermediate_2.pcap --skipbroadcast
 
 if $DEBUG ;
 then
@@ -94,4 +97,4 @@ if $DEBUG ;
 then
     echo 'Running tcpreplay to broadcast..'
 fi
-tcpreplay --loop=0 --intf1=eth2 --mbps=100.0 yturewrite_output_intermediate_2.pcap
+tcpreplay --loop=0 --intf1=eth3 --mbps=100.0 yturewrite_output_intermediate_2.pcap
