@@ -1,45 +1,15 @@
 #!/bin/bash
 
-if [ "$#" -lt 5 ]
-then
-echo "Missing parameters. See -h for help"
-exit 0
-fi
-
 DEBUG=false
+INT_OUT_FILE_NAME="yturewrite_output_intermediate.pcap"
+INT_CACHE_FILE_NAME="yturewrite_output_intermediate_cache.cache"
+INT_FINAL_OUT_FILE_NAME="yturewrite_output_intermediate_2.pcap"
 
 for i in "$@"
 do
 case $i in
-    -d=*|--dmac=*)
-    DESTINATION_MAC="${i#*=}"
-    shift # past argument=value
-    ;;
-    -e=*|--dip=*)
-    DESTINATION_IP="${i#*=}"
-    shift # past argument=value
-    ;;
-    -s=*|--smac=*)
-    SOURCE_MAC="${i#*=}"
-    shift # past argument=value
-    ;;
-    -t=*|--sip=*)
-	SOURCE_IP="${i#*=}"
-	shift #past argument=value
-	;;
-	-f=*|--file*)
-	FILE_PATH="${i#*=}"
-	shift #past argument=value
-	;;
 	-h*|--help*)
-    printf "Usage:
--d | --dmac  Destination MAC Address
--e | --dip   Destination IP Address
--s | --smac  Source MAC Address
--t | --sip   Source IP Address
--f | --file  Pcap file path to process
-Example:
-./rewrite.sh -d=00:15:17:57:c7:ad -e=10.1.2.2 -s=00:15:17:57:c6:c5 -t=10.1.2.3 -f=Vimeo1.pcap"
+    printf "Usage: Please edit rewrite_config.conf for options."
 	;;
 	-v*|--verbose*)
 	DEBUG=true
@@ -55,46 +25,69 @@ Example:
 esac
 done
 
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo "DESTINATION_MAC  = ${DESTINATION_MAC}"
-echo "DESTINATION_IP     = ${DESTINATION_IP}"
-echo "SOURCE_MAC    = ${SOURCE_MAC}"
-echo "SOURCE_IP    = ${SOURCE_IP}"
-echo "FILE_PATH    = ${FILE_PATH}"
-# echo "Number files in SEARCH PATH with EXTENSION:" $(ls -1 "${SEARCHPATH}"/*."${EXTENSION}" | wc -l)
-# if [[ -n $1 ]]; then
-#     echo "Last line of file specified as non-opt/last argument:"
-#     tail -1 $1
-# fi
-cd /users/barisymn
+source rewrite_config.conf
+
+if [ -z "$DEST_ALIAS" ]; then
+    echo "Missing destination IP."
+    exit 0
+fi
+
+if [ -z "$ETH_ALIAS" ]; then
+    echo "Missing ethernet alias."
+    exit 0
+fi
+
+if [ -z "$FILE_NAME" ]; then
+    echo "Missing pcap file name."
+    exit 0
+fi
+
+sourceMacAddress=$(cat /sys/class/net/$ETH_ALIAS/address)
+sourceIPAddress=$(ifconfig | awk '/inet addr/{print substr($2,6)}' | head -1)
+
+ping $DEST_ALIAS -c 1
+
+destinationMacAddress=$(arp -a | sed -n -e '/^$DEST_ALIAS/p' | grep -o -E -m -1 '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | head -1)
+destinationIPAddress=$(arp -a | sed -n -e '/^$DEST_ALIAS/p' | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | head -1)
+
+
+echo "Detected source MAC:$sourceMacAddress"
+echo "Detected source IP:$sourceIPAddress"
+echo "Detected destinationMacAddress:$destinationMacAddress"
+echo "Detected destinationIPAddress:$destinationIPAddress"
 
 if $DEBUG ;
 then
     echo "Running tcprewrite to convert MAC addresses.."
 fi
-tcprewrite --enet-dmac=$DESTINATION_MAC --enet-smac=$SOURCE_MAC --infile=$FILE_PATH --outfile=yturewrite_output_intermediate.pcap
+
+tcprewrite --enet-dmac=$destinationMacAddress --enet-smac=$sourceMacAddress --infile=$FILE_NAME --outfile=$INT_OUT_FILE_NAME
 
 if $DEBUG ;
 then
     echo 'Running tcpprep..'
 fi
-tcpprep --auto=bridge --pcap=$FILE_PATH --cachefile=yturewrite_output_intermediate_cache.cache
+tcpprep --auto=bridge --pcap=$FILE_NAME --cachefile=$INT_CACHE_FILE_NAME
 
 if $DEBUG ;
 then
     echo 'Running tcprewrite to convert IP addresses..'
 fi
-tcprewrite --endpoints=$SOURCE_IP:$DESTINATION_IP --cachefile=yturewrite_output_intermediate_cache.cache --infile=yturewrite_output_intermediate.pcap --outfile=yturewrite_output_intermediate_2.pcap --skipbroadcast
+echo "tcprewrite --endpoints=$sourceIPAddress:$destinationIPAddress --cachefile=$INT_CACHE_FILE_NAME --infile=$INT_OUT_FILE_NAME --outfile=$INT_FINAL_OUT_FILE_NAME --skipbroadcast"
+tcprewrite --endpoints=$sourceIPAddress:$destinationIPAddress --cachefile=$INT_CACHE_FILE_NAME --infile=$INT_OUT_FILE_NAME --outfile=$INT_FINAL_OUT_FILE_NAME --skipbroadcast
 
 if $DEBUG ;
 then
     echo 'Removing unncessesary files'
 fi
-rm yturewrite_output_intermediate.pcap
-rm yturewrite_output_intermediate_cache.cache
+
+rm $INT_OUT_FILE_NAME
+rm $INT_CACHE_FILE_NAME
 
 if $DEBUG ;
 then
     echo 'Running tcpreplay to broadcast..'
 fi
-tcpreplay --loop=0 --intf1=eth3 --mbps=100.0 yturewrite_output_intermediate_2.pcap
+tcpreplay --loop=$TCPREPLAY_LOOP --intf1=$ETH_ALIAS --mbps=$TCPREPLAY_SPEED yturewrite_output_intermediate_2.pcap
