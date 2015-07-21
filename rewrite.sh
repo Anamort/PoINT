@@ -49,8 +49,9 @@ sourceIPAddress=$(ifconfig | awk '/inet addr/{print substr($2,6)}' | head -1)
 
 ping $DEST_ALIAS -c 1
 
-destinationMacAddress=$(arp -a | sed -n -e '/^$DEST_ALIAS/p' | grep -o -E -m -1 '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | head -1)
-destinationIPAddress=$(arp -a | sed -n -e '/^$DEST_ALIAS/p' | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | head -1)
+destinationMacAddress=$(arp -a | sed -n -e /^$DEST_ALIAS/p  | grep -o -E -m -1 '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | head -1)
+destinationIPAddress=$(arp -a | sed -n -e /^$DEST_ALIAS/p | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | head -1)
+
 
 
 echo "Detected source MAC:$sourceMacAddress"
@@ -75,7 +76,7 @@ if $DEBUG ;
 then
     echo 'Running tcprewrite to convert IP addresses..'
 fi
-echo "tcprewrite --endpoints=$sourceIPAddress:$destinationIPAddress --cachefile=$INT_CACHE_FILE_NAME --infile=$INT_OUT_FILE_NAME --outfile=$INT_FINAL_OUT_FILE_NAME --skipbroadcast"
+
 tcprewrite --endpoints=$sourceIPAddress:$destinationIPAddress --cachefile=$INT_CACHE_FILE_NAME --infile=$INT_OUT_FILE_NAME --outfile=$INT_FINAL_OUT_FILE_NAME --skipbroadcast
 
 if $DEBUG ;
