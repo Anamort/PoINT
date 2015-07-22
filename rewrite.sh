@@ -56,8 +56,8 @@ destinationIPAddress=$(arp -a | sed -n -e /^$DEST_ALIAS/p | grep -o '[0-9]\{1,3\
 
 echo "Detected source MAC:$sourceMacAddress"
 echo "Detected source IP:$sourceIPAddress"
-echo "Detected destinationMacAddress:$destinationMacAddress"
-echo "Detected destinationIPAddress:$destinationIPAddress"
+echo "Detected destination Mac Address:$destinationMacAddress"
+echo "Detected destination IP Address:$destinationIPAddress"
 
 if $DEBUG ;
 then
