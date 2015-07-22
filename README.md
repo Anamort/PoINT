@@ -10,13 +10,9 @@ Last thing this script does is installing required packages for <code>NetClassif
  
 ```
 DEST_ALIAS=node1
-
 ETH_ALIAS=eth0
-
 FILE_NAME=Vimeo_1.pcap
-
 TCPREPLAY_LOOP=0
-
 TCPREPLAY_SPEED=100
 ```
 
