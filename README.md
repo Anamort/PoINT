@@ -17,8 +17,14 @@ TCPREPLAY_SPEED=100<br/></code>
 ####Behind the scenes
 **Q:** So what does <code>rewrite.sh</code> script do actually?<br/>
 **A:** After reading destination and source options from the configuration file, the script tries to detect their MAC and IP addresses automatically.<br/> The previously saved pcap file includes some destination, source MAC and IP addresses which may not be valid for some experiments. To replace them apropriately with the detected addresses according to current needs, <code>tcprewrite</code> can be used. That's what the script does mainly. MAC and IP addresses of packets in the pcap file are replaced respectively with the current source and destination addresses by running below commands:<br/><br/>
-<code>tcprewrite --enet-dmac=$destinationMacAddress --enet-smac=$sourceMacAddress --infile=$FILE_NAME --outfile=$INT_OUT_FILE_NAME<br/><br/>
-tcpprep --auto=bridge --pcap=$FILE_NAME --cachefile=$INT_CACHE_FILE_NAME<br/><br/>
+<code>
+tcprewrite --enet-dmac=$destinationMacAddress --enet-smac=$sourceMacAddress --infile=$FILE_NAME --outfile=$INT_OUT_FILE_NAME</code>
+<br/><br/>
+<code>
+tcpprep --auto=bridge --pcap=$FILE_NAME --cachefile=$INT_CACHE_FILE_NAME
+</code>
+<br/><br/>
+<code>
 tcprewrite --endpoints=$sourceIPAddress:$destinationIPAddress --cachefile=$INT_CACHE_FILE_NAME --infile=$INT_OUT_FILE_NAME --outfile=$INT_FINAL_OUT_FILE_NAME --skipbroadcast
 </code><br/><br/>
 And finally after all the replacements are done, <code>tcpreplay</code> command does the broadcast as follows:<br/><br/>
