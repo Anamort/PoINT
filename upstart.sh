@@ -9,16 +9,16 @@ make
 sudo make install
 
 
-cd /
+cd /users/said/
 
 #installing ifstat
 sudo apt-get install ifstat
 
 
 #installing NetClassify
-rm -rf ./NetClassify/
+rm -rf NetClassify/
 tar -xvzf NetClassify.tar.gz
 sudo apt-get install qt4-qmake
-cd ./NetClassify/
+cd NetClassify
 qmake-qt4
 make
