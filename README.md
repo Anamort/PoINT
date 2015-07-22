@@ -48,3 +48,4 @@ Detected source IP:10.1.1.2
 Detected destinationMacAddress:00:04:23:c7:a8:17
 Detected destinationIPAddress:10.1.3.3
 ```
+If <code>-v</code> option is specified to <code>rewrite</code> command, it will print detailed explanation, what it is currently up to.
