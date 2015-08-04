@@ -1,6 +1,10 @@
 # PoINT
 This repository includes neccessary files for the project.
 
+###IMPORTANT TO-DO
+In <code>rewrite.sh</code> don't forget to make <code>cd /users/said </code> command dynamic!! Otherwise won't work..
+
+
 ###Explanation
 - <code>upstart.sh</code> script does all the neccessary installation for the project. It first installs <code>tcpreplay</code> by extracting an existing package.<br/>
 After that it installs <code>ifstat</code> which is a monitoring tool that shows incoming and outgoing traffic of available ethernet interfaces.<br/>
